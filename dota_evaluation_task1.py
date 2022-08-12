@@ -51,6 +51,8 @@ def parse_gt(filename):
             else:
                 break
     return objects
+
+
 def voc_ap(rec, prec, use_07_metric=False):
     """ ap = voc_ap(rec, prec, [use_07_metric])
     Compute VOC AP given precision and recall.
@@ -308,10 +310,12 @@ def main():
         # plt.xlabel('recall')
         # plt.ylabel('precision')
         # plt.plot(rec, prec)
-       # plt.show()
+        # plt.show()
+        
     map = map/len(classnames)
     print('map:', map)
     classaps = 100*np.array(classaps)
     print('classaps: ', classaps)
+
 if __name__ == '__main__':
     main()

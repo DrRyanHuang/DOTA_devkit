@@ -11,3 +11,4 @@ __pycache__/
 Task1_merge/*.txt
 Task1/*.txt
 restoredexample/*
+.vscode

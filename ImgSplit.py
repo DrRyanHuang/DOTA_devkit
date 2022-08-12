@@ -11,6 +11,9 @@ import copy
 def choose_best_pointorder_fit_another(poly1, poly2):
     """
         To make the two polygons best fit with each point
+
+        poly1: 是被分割好的
+        poly2: 是原图的同一个bbox
     """
     x1 = poly1[0]
     y1 = poly1[1]
@@ -75,12 +78,16 @@ class splitbase():
     # def __del__(self):
     #     self.f_sub.close()
     ## grid --> (x, y) position of grids
+
+
     def polyorig2sub(self, left, up, poly):
+        # 根据左上角，对标注进行平移
         polyInsub = np.zeros(len(poly))
         for i in range(int(len(poly)/2)):
             polyInsub[i * 2] = int(poly[i * 2] - left)
             polyInsub[i * 2 + 1] = int(poly[i * 2 + 1] - up)
         return polyInsub
+
 
     def calchalf_iou(self, poly1, poly2):
         """
@@ -92,11 +99,14 @@ class splitbase():
         half_iou = inter_area / poly1_area
         return inter_poly, half_iou
 
+
     def saveimagepatches(self, img, subimgname, left, up):
         subimg = copy.deepcopy(img[up: (up + self.subsize), left: (left + self.subsize)])
         outdir = os.path.join(self.outimagepath, subimgname + self.ext)
         cv2.imwrite(outdir, subimg)
 
+
+    # 将5个点的变成4个点的bbox
     def GetPoly4FromPoly5(self, poly):
         distances = [cal_line_length((poly[i * 2], poly[i * 2 + 1] ), (poly[(i + 1) * 2], poly[(i + 1) * 2 + 1])) for i in range(int(len(poly)/2 - 1))]
         distances.append(cal_line_length((poly[0], poly[1]), (poly[8], poly[9])))
@@ -119,6 +129,8 @@ class splitbase():
                 count = count + 1
         return outpoly
 
+
+    # 保存挑出来的 Patch
     def savepatches(self, resizeimg, objects, subimgname, left, up, right, down):
         outdir = os.path.join(self.outlabelpath, subimgname + '.txt')
         mask_poly = []
@@ -126,30 +138,31 @@ class splitbase():
                                  (left, down)])
         with codecs.open(outdir, 'w', self.code) as f_out:
             for obj in objects:
-                gtpoly = shgeo.Polygon([(obj['poly'][0], obj['poly'][1]),
+                gtpoly = shgeo.Polygon([ (obj['poly'][0], obj['poly'][1]),
                                          (obj['poly'][2], obj['poly'][3]),
                                          (obj['poly'][4], obj['poly'][5]),
                                          (obj['poly'][6], obj['poly'][7])])
                 if (gtpoly.area <= 0):
                     continue
-                inter_poly, half_iou = self.calchalf_iou(gtpoly, imgpoly)
+                inter_poly, half_iou = self.calchalf_iou(gtpoly, imgpoly) # 计算当前 obbox 与 patch 的交集与 `交集/bbox`
 
                 # print('writing...')
-                if (half_iou == 1):
+                if (half_iou == 1): # 该 obbox 在 patch 内部
                     polyInsub = self.polyorig2sub(left, up, obj['poly'])
                     outline = ' '.join(list(map(str, polyInsub)))
                     outline = outline + ' ' + obj['name'] + ' ' + str(obj['difficult'])
                     f_out.write(outline + '\n')
+
                 elif (half_iou > 0):
                 #elif (half_iou > self.thresh):
                   ##  print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
                     inter_poly = shgeo.polygon.orient(inter_poly, sign=1)
                     out_poly = list(inter_poly.exterior.coords)[0: -1]
-                    if len(out_poly) < 4:
+                    if len(out_poly) < 4: # 三角形只有(一个角的)就不管了
                         continue
 
                     out_poly2 = []
-                    for i in range(len(out_poly)):
+                    for i in range(len(out_poly)):  # [(), (), ()] => [......]
                         out_poly2.append(out_poly[i][0])
                         out_poly2.append(out_poly[i][1])
 
@@ -166,7 +179,7 @@ class splitbase():
 
                     polyInsub = self.polyorig2sub(left, up, out_poly2)
 
-                    for index, item in enumerate(polyInsub):
+                    for index, item in enumerate(polyInsub): # 做边界限定
                         if (item <= 1):
                             polyInsub[index] = 1
                         elif (item >= self.subsize):
@@ -178,9 +191,13 @@ class splitbase():
                         ## if the left part is too small, label as '2'
                         outline = outline + ' ' + obj['name'] + ' ' + '2'
                     f_out.write(outline + '\n')
+
                 #else:
                  #   mask_poly.append(inter_poly)
+        
+        # 上边儿是写标注，这里是保存图片
         self.saveimagepatches(resizeimg, subimgname, left, up)
+
 
     def SplitSingle(self, name, rate, extent):
         """
@@ -196,10 +213,10 @@ class splitbase():
         fullname = os.path.join(self.labelpath, name + '.txt')
         objects = util.parse_dota_poly2(fullname)
         for obj in objects:
-            obj['poly'] = list(map(lambda x:rate*x, obj['poly']))
-            #obj['poly'] = list(map(lambda x: ([2 * y for y in x]), obj['poly']))
+            obj['poly'] = list(map(lambda x:rate*x, obj['poly']))  # 根据 rate 进行缩放标注
+            # obj['poly'] = list(map(lambda x: ([2 * y for y in x]), obj['poly']))
 
-        if (rate != 1):
+        if (rate != 1): # 按照 rate 缩放
             resizeimg = cv2.resize(img, None, fx=rate, fy=rate, interpolation = cv2.INTER_CUBIC)
         else:
             resizeimg = img
@@ -209,17 +226,17 @@ class splitbase():
 
         left, up = 0, 0
         while (left < weight):
-            if (left + self.subsize >= weight):
+            if (left + self.subsize >= weight): # (水平方向) 裁剪超出去了
                 left = max(weight - self.subsize, 0)
             up = 0
             while (up < height):
-                if (up + self.subsize >= height):
+                if (up + self.subsize >= height): # (竖直方向) 裁剪超出去了
                     up = max(height - self.subsize, 0)
                 right = min(left + self.subsize, weight - 1)
                 down = min(up + self.subsize, height - 1)
                 subimgname = outbasename + str(left) + '___' + str(up)
                 # self.f_sub.write(name + ' ' + subimgname + ' ' + str(left) + ' ' + str(up) + '\n')
-                self.savepatches(resizeimg, objects, subimgname, left, up, right, down)
+                self.savepatches(resizeimg, objects, subimgname, left, up, right, down)  # 裁剪完毕后的保存
                 if (up + self.subsize >= height):
                     break
                 else:
@@ -228,6 +245,7 @@ class splitbase():
                 break
             else:
                 left = left + self.slide
+
 
     def splitdata(self, rate):
         """
@@ -238,8 +256,9 @@ class splitbase():
         for name in imagenames:
             self.SplitSingle(name, rate, self.ext)
 
+
 if __name__ == '__main__':
     # example usage of ImgSplit
     split = splitbase(r'example',
-                       r'examplesplit')
+                      r'examplesplit')
     split.splitdata(1)

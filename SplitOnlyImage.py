@@ -19,10 +19,13 @@ class splitbase():
         self.srcpath = srcpath
         self.dstpath = dstpath
         self.ext = ext
+
+
     def saveimagepatches(self, img, subimgname, left, up, ext='.png'):
         subimg = copy.deepcopy(img[up: (up + self.subsize), left: (left + self.subsize)])
         outdir = os.path.join(self.dstpath, subimgname + ext)
         cv2.imwrite(outdir, subimg)
+
 
     def SplitSingle(self, name, rate, extent):
         img = cv2.imread(os.path.join(self.srcpath, name + extent))
@@ -56,12 +59,15 @@ class splitbase():
             else:
                 left = left + self.slide
 
+
     def splitdata(self, rate):
         
         imagelist = util.GetFileFromThisRootDir(self.srcpath)
         imagenames = [util.custombasename(x) for x in imagelist if (util.custombasename(x) != 'Thumbs')]
         for name in imagenames:
             self.SplitSingle(name, rate, self.ext)
+
+            
 if __name__ == '__main__':
     split = splitbase(r'example/images',
                       r'example/imagesSplit')

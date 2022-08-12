@@ -13,21 +13,31 @@ import math
 wordname_15 = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
                'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
 
+# 用来：
+# `XXX/YYY/ZZZ/P0000.png`` -> P0000
 def custombasename(fullname):
     return os.path.basename(os.path.splitext(fullname)[0])
 
-def GetFileFromThisRootDir(dir,ext = None):
-  allfiles = []
-  needExtFilter = (ext != None)
-  for root,dirs,files in os.walk(dir):
-    for filespath in files:
-      filepath = os.path.join(root, filespath)
-      extension = os.path.splitext(filepath)[1][1:]
-      if needExtFilter and extension in ext:
-        allfiles.append(filepath)
-      elif not needExtFilter:
-        allfiles.append(filepath)
-  return allfiles
+
+
+# 用来：
+# 获取指定的文件列表
+# 这函数可以单独拿出来当工具用
+def GetFileFromThisRootDir(dir, ext = None):
+    allfiles = []
+    needExtFilter = (ext != None)
+    for root, dirs, files in os.walk(dir): # 这一步还是递归的，比 `glob.glob("**/*.png")` 好用啊
+        for filespath in files:
+            filepath = os.path.join(root, filespath)
+            extension = os.path.splitext(filepath)[1][1:] # 文件后缀名，如：png, jpg 之类的
+            if needExtFilter and extension in ext:   # ext 中可以指定需要的后缀
+                allfiles.append(filepath)
+            elif not needExtFilter:
+                allfiles.append(filepath)
+    return allfiles
+
+
+
 
 def TuplePoly2Poly(poly):
     outpoly = [poly[0][0], poly[0][1],
@@ -36,6 +46,8 @@ def TuplePoly2Poly(poly):
                        poly[3][0], poly[3][1]
                        ]
     return outpoly
+
+
 
 def parse_dota_poly(filename):
     """
@@ -95,6 +107,9 @@ def parse_dota_poly(filename):
             break
     return objects
 
+
+
+# [(), (), (), ()] => [..., ..., ..., ...]
 def parse_dota_poly2(filename):
     """
         parse the dota ground truth in the format:
@@ -103,8 +118,10 @@ def parse_dota_poly2(filename):
     objects = parse_dota_poly(filename)
     for obj in objects:
         obj['poly'] = TuplePoly2Poly(obj['poly'])
-        obj['poly'] = list(map(int, obj['poly']))
+        obj['poly'] = list(map(int, obj['poly'])) # float => int
     return objects
+
+
 
 def parse_dota_rec(filename):
     """
@@ -119,19 +136,27 @@ def parse_dota_rec(filename):
     return objects
 ## bounding box transfer for varies format
 
+
+
 def dots4ToRec4(poly):
     xmin, xmax, ymin, ymax = min(poly[0][0], min(poly[1][0], min(poly[2][0], poly[3][0]))), \
-                            max(poly[0][0], max(poly[1][0], max(poly[2][0], poly[3][0]))), \
+                             max(poly[0][0], max(poly[1][0], max(poly[2][0], poly[3][0]))), \
                              min(poly[0][1], min(poly[1][1], min(poly[2][1], poly[3][1]))), \
                              max(poly[0][1], max(poly[1][1], max(poly[2][1], poly[3][1])))
     return xmin, ymin, xmax, ymax
+
+
+
 def dots4ToRec8(poly):
     xmin, ymin, xmax, ymax = dots4ToRec4(poly)
     return xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax
     #return dots2ToRec8(dots4ToRec4(poly))
+
+
 def dots2ToRec8(rec):
     xmin, ymin, xmax, ymax = rec[0], rec[1], rec[2], rec[3]
     return xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax
+
 
 def groundtruth2Task1(srcpath, dstpath):
     filelist = GetFileFromThisRootDir(srcpath)
@@ -161,6 +186,8 @@ def groundtruth2Task1(srcpath, dstpath):
                 outline = custombasename(filepath) + ' ' + '0.6' + ' ' + ' '.join(map(str, poly))
 
             filedict[category].write(outline + '\n')
+
+
 
 def Task2groundtruth_poly(srcpath, dstpath):
     thresh = 0.1
@@ -194,6 +221,7 @@ def Task2groundtruth_poly(srcpath, dstpath):
                 filedict[filename].write(' '.join(poly) + ' ' + idname + '\n')
 
 
+
 def polygonToRotRectangle(bbox):
     """
     :param bbox: The polygon stored in format [x1, y1, x2, y2, x3, y3, x4, y4]
@@ -225,8 +253,12 @@ def polygonToRotRectangle(bbox):
 
     return [float(center[0]),float(center[1]),w,h,angle]
 
+
+
 def cal_line_length(point1, point2):
     return math.sqrt( math.pow(point1[0] - point2[0], 2) + math.pow(point1[1] - point2[1], 2))
+
+
 
 def get_best_begin_point(coordinate):
     x1 = coordinate[0][0]
