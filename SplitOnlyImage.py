@@ -1,3 +1,6 @@
+# 本文件仅仅用来分割图片，也就是说用来分割 test 集
+# 并没有分割对应的标注
+
 import os
 import numpy as np
 import cv2
@@ -11,23 +14,26 @@ class splitbase():
                  gap=100,
                  subsize=1024,
                  ext='.png'):
-        self.srcpath = srcpath
-        self.outpath = dstpath
-        self.gap = gap
-        self.subsize = subsize
-        self.slide = self.subsize - self.gap
-        self.srcpath = srcpath
-        self.dstpath = dstpath
-        self.ext = ext
+
+        self.gap = gap # 重叠的像素
+        self.subsize = subsize # 子图的大小
+        self.slide = self.subsize - self.gap # 裁剪时滑动的位移
+        self.srcpath = srcpath  # 未裁剪的图的位置
+        self.dstpath = dstpath  # 裁剪后的图的保存位置
+        self.ext = ext # 图片后缀
 
 
     def saveimagepatches(self, img, subimgname, left, up, ext='.png'):
+        # 根据给定的左上角，裁剪对应的patch并保存
+
         subimg = copy.deepcopy(img[up: (up + self.subsize), left: (left + self.subsize)])
         outdir = os.path.join(self.dstpath, subimgname + ext)
         cv2.imwrite(outdir, subimg)
 
 
     def SplitSingle(self, name, rate, extent):
+        # 读取，并计算出裁剪 patch 的左上角, 调用 self.saveimagepatches 去保存
+
         img = cv2.imread(os.path.join(self.srcpath, name + extent))
         assert np.shape(img) != ()
 
@@ -60,9 +66,13 @@ class splitbase():
                 left = left + self.slide
 
 
-    def splitdata(self, rate):
+    def splitdata(self, rate): 
+
+        # rate 指要在裁剪前缩放的比例
         
+        # 获取该路径下的所有文件
         imagelist = util.GetFileFromThisRootDir(self.srcpath)
+        # 获取图片的所有 ID : P2598
         imagenames = [util.custombasename(x) for x in imagelist if (util.custombasename(x) != 'Thumbs')]
         for name in imagenames:
             self.SplitSingle(name, rate, self.ext)
@@ -71,4 +81,4 @@ class splitbase():
 if __name__ == '__main__':
     split = splitbase(r'example/images',
                       r'example/imagesSplit')
-    split.splitdata(1)
+    split.splitdata(rate=1)

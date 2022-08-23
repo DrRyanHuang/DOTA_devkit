@@ -21,7 +21,7 @@ def custombasename(fullname):
 
 
 # 用来：
-# 获取指定的文件列表
+# 获取指定的文件列表，若 ext 不指定则为目录下所有文件(递归子目录)
 # 这函数可以单独拿出来当工具用
 def GetFileFromThisRootDir(dir, ext = None):
     allfiles = []
@@ -48,7 +48,8 @@ def TuplePoly2Poly(poly):
     return outpoly
 
 
-
+# 加载 filename 对应的标注
+# 并且 'poly' 变为 [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
 def parse_dota_poly(filename):
     """
         parse the dota ground truth in the format:

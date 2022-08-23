@@ -12,3 +12,5 @@ Task1_merge/*.txt
 Task1/*.txt
 restoredexample/*
 .vscode
+_my_test*
+*.pyd

@@ -44,12 +44,15 @@ For the detail of <strong style="color:blue"> DOTA-v1.0</strong>, you can refer 
 ### Installation
 1. install swig
 ```
-    sudo apt-get install swig
+sudo apt-get install swig
 ```
+windows swig安装方法：
+[https://blog.csdn.net/HaoZiHuang/article/details/126200299](https://blog.csdn.net/HaoZiHuang/article/details/126200299)
+
 2. create the c++ extension for python
 ```
-    swig -c++ -python polyiou.i
-    python setup.py build_ext --inplace
+swig -c++ -python polyiou.i
+python setup.py build_ext --inplace
 ```
 
 ### Usage

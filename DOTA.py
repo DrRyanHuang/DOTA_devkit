@@ -30,6 +30,8 @@ class DOTA:
         self.createIndex()
 
     def createIndex(self):
+
+        # 就是将 self.catToImgs 与 self.ImgToAnns 填充完毕
         for filename in self.labpaths:
             objects = util.parse_dota_poly(filename)
             imgid = util.custombasename(filename)
@@ -38,6 +40,8 @@ class DOTA:
                 cat = obj['name']
                 self.catToImgs[cat].append(imgid)
 
+
+    # 根据传入类别返回图片ID: P0010
     def getImgIds(self, catNms=[]):
         """
         :param catNms: category names
@@ -73,6 +77,7 @@ class DOTA:
         return outobjects
 
 
+
     def showAnns(self, objects, imgId, range):
         """
         :param catNms: category names
@@ -83,7 +88,7 @@ class DOTA:
         """
         img = self.loadImgs(imgId)[0]
         plt.imshow(img)
-        plt.axis('off')
+        plt.axis('off') # 把图中的轴去掉
 
         ax = plt.gca()
         ax.set_autoscale_on(False)
@@ -94,20 +99,21 @@ class DOTA:
 
         for obj in objects:
             c = (np.random.random((1, 3)) * 0.6 + 0.4).tolist()[0] # 颜色
-            poly = obj['poly']
+            poly = obj['poly'] # 多边形的4个点
             polygons.append(Polygon(poly))
             color.append(c)
             point = poly[0]
             circle = Circle((point[0], point[1]), r)  # obb 第0个点绘制圆圈
             circles.append(circle)
 
-        p = PatchCollection(polygons, facecolors=color, linewidths=0, alpha=0.4)
+        p = PatchCollection(polygons, facecolors=color, linewidths=0, alpha=0.4) # 绘制内部半透明效果
         ax.add_collection(p)
-        p = PatchCollection(polygons, facecolors='none', edgecolors=color, linewidths=2)
+        p = PatchCollection(polygons, facecolors='none', edgecolors=color, linewidths=2) # 绘制外部边框
         ax.add_collection(p)
-        p = PatchCollection(circles, facecolors='red')
+        p = PatchCollection(circles, facecolors='red') # 绘制第0个点的圈圈
         ax.add_collection(p)
         plt.show()
+
 
     # 根据 imgID: P0010 => np.ndarray
     def loadImgs(self, imgids=[]):
@@ -127,10 +133,11 @@ class DOTA:
             imgs.append(img)
         return imgs
 
+
 if __name__ == '__main__':
     examplesplit = DOTA('example')
-    imgids = examplesplit.getImgIds(catNms=['plane'])
-    img = examplesplit.loadImgs(imgids)
+    imgids = examplesplit.getImgIds(catNms=['plane']) # 根据类别找对应的图片
+    img = examplesplit.loadImgs(imgids) # 根据图片ID P0010 加载图片(是个列表)
     for imgid in imgids:
-        anns = examplesplit.loadAnns(imgId=imgid)
-        examplesplit.showAnns(anns, imgid, 2)
+        anns = examplesplit.loadAnns(imgId=imgid) # 根据图片ID加载标注
+        examplesplit.showAnns(anns, imgid, 2) # 根据图片ID绘制标注，无需传入图片 np.ndarray
