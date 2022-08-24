@@ -56,6 +56,11 @@ swig -c++ -python polyiou.i
 python setup.py build_ext --inplace
 ```
 
+3. requirements
+```
+pip install shapely -i https://mirror.baidu.com/pypi/simple
+```
+
 ### 4. Usage
 0. 关于使用概述, 直接使用 "demo.ipynb", 里面有图像的切分与合并等用法.
 1. Reading and visualizing data, you can use DOTA.py.
@@ -113,3 +118,38 @@ imgname score xmin ymin xmax ymax
 > The evaluation protocol for horizontal bounding boxes follows the PASCAL VOC benchmark, which uses mean Average Precision(**mAP**) as metric.
 
 评估方式与 PASCAL VOC 中相同, 使用 mAP 作为指标.
+
+
+### 6. TODO
+
+- [x] `dota_evaluation_task1.py` 调试完毕, 修改 np.bool warning 和 IndexError.
+- [ ] `dota_evaluation_task2.py` 调试
+- [ ] `dota-v1.5_evaluation_task1.py` 调试
+- [ ] `dota-v1.5_evaluation_task2.py` 调试
+- [x] `demo.ipynb` 调试完毕, 添加了自动创建 `Task1`、`Task1_merge` 和 `restoredexample/labelTxt`的部分
+- [x] `DOTA.py` 调试完毕, 添加创建 imageset.txt 的部分
+- [x] `SplitOnlyImage.py` 与 `SplitOnlyImage_multi_process.py` 调试完毕
+- [x] `ResultMerge.py` 调试完毕
+- [ ] `ResultMerge_multi_process.py` 调试
+- [x] `ImgSplit.py` 调试完毕
+- [ ] `ImgSplit_multi_process.py` 调试
+- [ ] `DOTA2COCO.py` 调试
+- [ ] 了解 `polyiou.i` 关于 swig 的用法
+- [ ] 完成 `poly_nms_gpu` 的用法, 目前原仓库也并未有任何说明
+
+
+### 7. poly_nms_gpu 部分
+
+```
+cd poly_nms_gpu
+```
+直接 make 或者:
+```shell
+python setup.py build_ext --inplace
+```
+测试安装是否成功可以:
+```shell
+from poly_nms_gpu.poly_nms import poly_gpu_nms
+from poly_nms_gpu.poly_overlaps import poly_overlaps
+```
+成功导入即可

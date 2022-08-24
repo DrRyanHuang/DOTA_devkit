@@ -163,7 +163,7 @@ def voc_eval(detpath,
     for imagename in imagenames:
         R = [obj for obj in recs[imagename] if obj['name'] == classname]
         bbox = np.array([x['bbox'] for x in R])
-        difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
+        difficult = np.array([x['difficult'] for x in R]).astype(bool)
         det = [False] * len(R)
         npos = npos + sum(~difficult)
         class_recs[imagename] = {'bbox': bbox,
@@ -182,6 +182,12 @@ def voc_eval(detpath,
     # print('check confidence: ', confidence)
 
     BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
+
+    # Fix IndexError Error:
+    # BB = BB[sorted_ind, :]    <===== 后面有这行代码, 不加下面的if会报错
+    # IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed
+    if BB.shape == (0,):
+        BB = np.zeros(shape=(0, 8))
 
     # sort by confidence
     sorted_ind = np.argsort(-confidence)
@@ -319,7 +325,7 @@ def main():
         
     map = map/len(classnames)
     print('map:', map)
-    classaps = 100*np.array(classaps)
+    classaps = 100 * np.array(classaps)
     print('classaps: ', classaps)
 
 if __name__ == '__main__':

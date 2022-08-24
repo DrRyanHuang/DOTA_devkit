@@ -17,3 +17,6 @@ _my_test*
 example/imagesSplit/*
 example/imageset.txt
 example_split/*
+poly_nms_gpu/poly_nms.cpp
+poly_nms_gpu/poly_overlaps.cpp
+*.zip

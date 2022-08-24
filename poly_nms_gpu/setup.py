@@ -8,6 +8,7 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import subprocess
 import numpy as np
+import platform
 
 def find_in_path(name, path):
     "Find a file in a search path"
@@ -37,7 +38,14 @@ def locate_cuda():
     else:
         # otherwise, search the PATH for NVCC
         default_path = pjoin(os.sep, 'usr', 'local', 'cuda', 'bin')
-        nvcc = find_in_path('nvcc', os.environ['PATH'] + os.pathsep + default_path)
+
+        if platform.system() == "Windows":
+            nvcc = find_in_path('nvcc.exe', os.environ['PATH'] + os.pathsep + default_path)
+        elif platform.system() == "Linux":
+            nvcc = find_in_path('nvcc', os.environ['PATH'] + os.pathsep + default_path)
+        else:
+            raise NotImplementedError
+
         if nvcc is None:
             raise EnvironmentError('The nvcc binary could not be '
                 'located in your $PATH. Either add it to your path, or set $CUDAHOME')
@@ -46,6 +54,11 @@ def locate_cuda():
     cudaconfig = {'home':home, 'nvcc':nvcc,
                   'include': pjoin(home, 'include'),
                   'lib64': pjoin(home, 'lib64')}
+
+    # Fix some windows bug:
+    if not os.path.exists(cudaconfig['lib64']):
+        cudaconfig['lib64'] = pjoin(home, 'lib')
+    
     try:
         for k, v in cudaconfig.iteritems():
             if not os.path.exists(v):
@@ -64,6 +77,8 @@ try:
 except AttributeError:
     numpy_include = np.get_numpy_include()
 
+# Windows 上好像可以尝试这个，但是我没有搞定
+# https://github.com/endernewton/tf-faster-rcnn/issues/335#issuecomment-390640077
 def customize_compiler_for_nvcc(self):
     """inject deep into distutils to customize how the dispatch
     to gcc/nvcc works.
@@ -78,7 +93,11 @@ def customize_compiler_for_nvcc(self):
     self.src_extensions.append('.cu')
 
     # save references to the default compiler_so and _comple methods
-    default_compiler_so = self.compiler_so
+    if platform.system() == "Windows":
+        # https://www.jianshu.com/p/0c9542cef58a
+        default_compiler_so = ""
+    elif platform.system() == "Linux":
+        default_compiler_so = self.compiler_so
     super = self._compile
 
     # now redefine the _compile method. This gets executed for each

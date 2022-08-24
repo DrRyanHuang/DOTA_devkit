@@ -15,7 +15,7 @@ def poly_gpu_nms(np.ndarray[np.float32_t, ndim=2] dets, np.float thresh,
         keep = np.zeros(boxes_num, dtype=np.int32)
     cdef np.ndarray[np.float32_t, ndim=1] \
         scores = dets[:, 8]
-    cdef np.ndarray[np.int_t, ndim=1] \
+    cdef np.ndarray[np.int64_t, ndim=1] \
         order = scores.argsort()[::-1]
     cdef np.ndarray[np.float32_t, ndim=2] \
         sorted_dets = dets[order, :]
