@@ -1,3 +1,5 @@
+# 本文件用于切分图片和对应的标注
+
 import os
 import codecs
 import numpy as np
@@ -130,7 +132,7 @@ class splitbase():
         return outpoly
 
 
-    # 保存挑出来的 Patch
+    # 保存挑出来的 Patch, 包括标注和图片, 前者主要代码在本函数, 后者调用 self.saveimagepatches
     def savepatches(self, resizeimg, objects, subimgname, left, up, right, down):
         outdir = os.path.join(self.outlabelpath, subimgname + '.txt')
         mask_poly = []
@@ -193,7 +195,7 @@ class splitbase():
                     f_out.write(outline + '\n')
 
                 #else:
-                 #   mask_poly.append(inter_poly)
+                #   mask_poly.append(inter_poly)
         
         # 上边儿是写标注，这里是保存图片
         self.saveimagepatches(resizeimg, subimgname, left, up)
@@ -210,13 +212,13 @@ class splitbase():
         img = cv2.imread(os.path.join(self.imagepath, name + extent))
         if np.shape(img) == ():
             return
-        fullname = os.path.join(self.labelpath, name + '.txt')
+        fullname = os.path.join(self.labelpath, name + '.txt') # 标注文件的名字
         objects = util.parse_dota_poly2(fullname)
         for obj in objects:
             obj['poly'] = list(map(lambda x:rate*x, obj['poly']))  # 根据 rate 进行缩放标注
             # obj['poly'] = list(map(lambda x: ([2 * y for y in x]), obj['poly']))
 
-        if (rate != 1): # 按照 rate 缩放
+        if (rate != 1): # 按照 rate 缩放图片
             resizeimg = cv2.resize(img, None, fx=rate, fy=rate, interpolation = cv2.INTER_CUBIC)
         else:
             resizeimg = img
@@ -251,7 +253,9 @@ class splitbase():
         """
         :param rate: resize rate before cut
         """
+        # 所有图片文件路径列表
         imagelist = GetFileFromThisRootDir(self.imagepath)
+        # 获取每张图的 ID eg: P1888
         imagenames = [util.custombasename(x) for x in imagelist if (util.custombasename(x) != 'Thumbs')]
         for name in imagenames:
             self.SplitSingle(name, rate, self.ext)
@@ -259,6 +263,6 @@ class splitbase():
 
 if __name__ == '__main__':
     # example usage of ImgSplit
-    split = splitbase(r'example',
-                      r'examplesplit')
-    split.splitdata(1)
+    split = splitbase(r'example',      # 传入原始未分割图片目录
+                      r'examplesplit') # 分割后图片保存目录
+    split.splitdata(rate=1)

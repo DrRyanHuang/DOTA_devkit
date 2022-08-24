@@ -1,3 +1,4 @@
+# 本文件用于切分图片和对应的标注, 多进程且有 Padding 操作
 """
 -------------
 This is the multi-process version
@@ -104,6 +105,8 @@ class splitbase():
             polyInsub[i * 2 + 1] = int(poly[i * 2 + 1] - up)
         return polyInsub
 
+
+
     def calchalf_iou(self, poly1, poly2):
         """
             It is not the iou on usual, the iou is the value of intersection over poly1
@@ -113,6 +116,8 @@ class splitbase():
         poly1_area = poly1.area
         half_iou = inter_area / poly1_area
         return inter_poly, half_iou
+
+
 
     def saveimagepatches(self, img, subimgname, left, up):
         subimg = copy.deepcopy(img[up: (up + self.subsize), left: (left + self.subsize)])
@@ -124,6 +129,8 @@ class splitbase():
             cv2.imwrite(outdir, outimg)
         else:
             cv2.imwrite(outdir, subimg)
+
+
 
     def GetPoly4FromPoly5(self, poly):
         distances = [cal_line_length((poly[i * 2], poly[i * 2 + 1] ), (poly[(i + 1) * 2], poly[(i + 1) * 2 + 1])) for i in range(int(len(poly)/2 - 1))]
@@ -146,6 +153,8 @@ class splitbase():
                 outpoly.append(poly[count * 2 + 1])
                 count = count + 1
         return outpoly
+
+
 
     def savepatches(self, resizeimg, objects, subimgname, left, up, right, down):
         outdir = os.path.join(self.outlabelpath, subimgname + '.txt')
@@ -210,6 +219,8 @@ class splitbase():
                  #   mask_poly.append(inter_poly)
         self.saveimagepatches(resizeimg, subimgname, left, up)
 
+
+
     def SplitSingle(self, name, rate, extent):
         """
             split a single image and ground truth
@@ -257,6 +268,8 @@ class splitbase():
             else:
                 left = left + self.slide
 
+
+
     def splitdata(self, rate):
         """
         :param rate: resize rate before cut
@@ -272,13 +285,18 @@ class splitbase():
             worker = partial(split_single_warp, split_base=self, rate=rate, extent=self.ext)
             self.pool.map(worker, imagenames)
 
+
     def __getstate__(self):
         self_dict = self.__dict__.copy()
         del self_dict['pool']
         return self_dict
 
+
     def __setstate__(self, state):
         self.__dict__.update(state)
+
+
+
 if __name__ == '__main__':
     # example usage of ImgSplit
     
@@ -293,10 +311,10 @@ if __name__ == '__main__':
     # print("Time used:", elapsed)
 
     split = splitbase(r'example',
-                      r'example_split',
+                      r'examplesplit',
                       gap=200,
                       subsize=1024,
-                      num_process=8
+                      num_process=2
                       )
     split.splitdata(2)
 

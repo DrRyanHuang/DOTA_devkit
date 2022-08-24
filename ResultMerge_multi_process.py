@@ -3,6 +3,7 @@
     detpath is the path for 15 result files, for the format, you can refer to "http://captain.whu.edu.cn/DOTAweb/tasks.html"
     search for PATH_TO_BE_CONFIGURED to config the paths
     Note, the evaluation is on the large scale images
+    (上边的链接已经打不开了)
 """
 import os
 import numpy as np

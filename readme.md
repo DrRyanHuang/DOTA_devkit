@@ -61,7 +61,7 @@ python setup.py build_ext --inplace
 2. Evaluating the result, you can refer to the "dota_evaluation_task1.py" and "dota_evaluation_task2.py" (or "dota-v1.5_evaluation_task1.py" and "dota-v1.5_evaluation_task2.py" for DOTA-v1.5)
 3. Split the large image, you can refer to the "ImgSplit"
 4. Merging the results detected on the patches, you can refer to the ResultMerge.py
-5. 如果仅仅想分割 test 集的图，而不分割对应的标注(test集没有标注)，则可以使用"SplitOnlyImage.py" 和 "SplitOnlyImage_multi_process.py", 后者比前者多了多进程池
+5. 如果仅仅想分割 test 集的图，而不分割对应的标注(test集没有标注)，则可以使用"SplitOnlyImage.py" 和 "SplitOnlyImage_multi_process.py", 后者比前者多了多进程池并行
 
 An example is shown in the demo.
 The subdirectory of "basepath"(which is used in "DOTA.py", "ImgSplit.py") is in the structure of

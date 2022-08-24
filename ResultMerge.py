@@ -1,8 +1,10 @@
+# 该文件用于合并最后检测的结果, 但是不能用来合并刚分割的标注文件
 """
     To use the code, users should to config detpath, annopath and imagesetfile
     detpath is the path for 15 result files, for the format, you can refer to "http://captain.whu.edu.cn/DOTAweb/tasks.html"
     search for PATH_TO_BE_CONFIGURED to config the paths
     Note, the evaluation is on the large scale images
+    (上边的链接已经打不开了)
 """
 import os
 import numpy as np
@@ -15,11 +17,13 @@ import polyiou
 nms_thresh = 0.3
 
 def py_cpu_nms_poly(dets, thresh):
+    # 这是四边形的 nms
+
     scores = dets[:, 8]
     polys = []
     areas = []
     for i in range(len(dets)):
-        tm_polygon = polyiou.VectorDouble([dets[i][0], dets[i][1],
+        tm_polygon = polyiou.VectorDouble([ dets[i][0], dets[i][1],
                                             dets[i][2], dets[i][3],
                                             dets[i][4], dets[i][5],
                                             dets[i][6], dets[i][7]])
@@ -39,7 +43,10 @@ def py_cpu_nms_poly(dets, thresh):
         order = order[inds + 1]
     return keep
 
+
 def py_cpu_nms(dets, thresh):
+    # 这是矩形框的 nms
+
     """Pure Python NMS baseline."""
     #print('dets:', dets)
     x1 = dets[:, 0]
@@ -71,7 +78,10 @@ def py_cpu_nms(dets, thresh):
 
     return keep
 
+
 def nmsbynamedict(nameboxdict, nms, thresh):
+    # 将每个 ID 对应的 bbox 做nms
+    # 最后依旧返回字典, {ID : [bbox, bbox]}
     nameboxnmsdict = {x: [] for x in nameboxdict}
     for imgname in nameboxdict:
         #print('imgname:', imgname)
@@ -88,7 +98,11 @@ def nmsbynamedict(nameboxdict, nms, thresh):
             outdets.append(nameboxdict[imgname][index])
         nameboxnmsdict[imgname] = outdets
     return nameboxnmsdict
+
+
+# 根据 rate 恢复原来多边形的大小
 def poly2origpoly(poly, x, y, rate):
+
     origpoly = []
     for i in range(int(len(poly)/2)):
         tmp_x = float(poly[i * 2] + x) / float(rate)
@@ -97,17 +111,21 @@ def poly2origpoly(poly, x, y, rate):
         origpoly.append(tmp_y)
     return origpoly
 
+
 def mergebase(srcpath, dstpath, nms):
-    filelist = util.GetFileFromThisRootDir(srcpath)
+
+    # for循环循环每一个类, 将每一个类的分割小图合并并做NMS
+    # 之后将NMS后的合并结果保存到新目录
+    filelist = util.GetFileFromThisRootDir(srcpath) # 获取那15个类的文件夹位置
     for fullname in filelist:
-        name = util.custombasename(fullname)
+        name = util.custombasename(fullname) # eg: 'Task1_baseball-diamond' 此时还未做NMS
         #print('name:', name)
         dstname = os.path.join(dstpath, name + '.txt')
         with open(fullname, 'r') as f_in:
-            nameboxdict = {}
+            nameboxdict = {} # 用来存放每个 ID 文件对应的所有 pred/GT
             lines = f_in.readlines()
             splitlines = [x.strip().split(' ') for x in lines]
-            for splitline in splitlines:
+            for splitline in splitlines: # 每一行就是一个 obb 框, 循环用来更新 nameboxdict 
                 subname = splitline[0]
                 splitname = subname.split('__')
                 oriname = splitname[0]
@@ -123,14 +141,16 @@ def mergebase(srcpath, dstpath, nms):
 
                 confidence = splitline[1]
                 poly = list(map(float, splitline[2:]))
-                origpoly = poly2origpoly(poly, x, y, rate)
+                origpoly = poly2origpoly(poly, x, y, rate) # 根据 rate 恢复原来的大小
                 det = origpoly
                 det.append(confidence)
-                det = list(map(float, det))
+                det = list(map(float, det)) # 将每个元素转化为 float
                 if (oriname not in nameboxdict):
                     nameboxdict[oriname] = []
                 nameboxdict[oriname].append(det)
-            nameboxnmsdict = nmsbynamedict(nameboxdict, nms, nms_thresh)
+            nameboxnmsdict = nmsbynamedict(nameboxdict, nms, nms_thresh) # 将每个ID对应的bbox做nms
+
+            # 上一个循环NMS之后, 重新写每一个类文件有哪些文件ID, 以及对应的ID有哪些obb
             with open(dstname, 'w') as f_out:
                 for imgname in nameboxnmsdict:
                     for det in nameboxnmsdict[imgname]:
@@ -140,29 +160,34 @@ def mergebase(srcpath, dstpath, nms):
                         outline = imgname + ' ' + str(confidence) + ' ' + ' '.join(map(str, bbox))
                         #print('outline:', outline)
                         f_out.write(outline + '\n')
-def mergebyrec(srcpath, dstpath):
+                        # 每一行是：
+                        # 'P0770 1.0 638.0 350.0 780.0 422.0 716.0 566.0 564.0 498.0'
+
+
+def mergebyrec(srcpath, dstpath): # 用来合并矩形的结果(hbb)
     """
     srcpath: result files before merge and nms
     dstpath: result files after merge and nms
     """
-    # srcpath = r'E:\bod-dataset\results\bod-v3_rfcn_2000000'
-    # dstpath = r'E:\bod-dataset\results\bod-v3_rfcn_2000000_nms'
 
     mergebase(srcpath,
               dstpath,
               py_cpu_nms)
-def mergebypoly(srcpath, dstpath):
+
+
+def mergebypoly(srcpath, dstpath): # 用来合并多边形的结果(obb)
     """
     srcpath: result files before merge and nms
     dstpath: result files after merge and nms
     """
-    # srcpath = r'/home/dingjian/evaluation_task1/result/faster-rcnn-59/comp4_test_results'
-    # dstpath = r'/home/dingjian/evaluation_task1/result/faster-rcnn-59/testtime'
 
     mergebase(srcpath,
               dstpath,
               py_cpu_nms_poly)
+
+
 if __name__ == '__main__':
     # see demo for example
-    mergebypoly(r'path_to_configure', r'path_to_configure')
+    mergebypoly(r'examplesplit/labelTxt', 
+                r'examplesplit/labelTxt_merge')
     # mergebyrec()

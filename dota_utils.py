@@ -109,8 +109,8 @@ def parse_dota_poly(filename):
     return objects
 
 
-
-# [(), (), (), ()] => [..., ..., ..., ...]
+# 加载 filename 对应的标注
+# 并且 'poly' [(., .), (., .), (., .), (., .)] => [..., ..., ..., ..., ..., ..., ..., ...]
 def parse_dota_poly2(filename):
     """
         parse the dota ground truth in the format:
@@ -159,15 +159,17 @@ def dots2ToRec8(rec):
     return xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax
 
 
+# 读取GT, 将所有标注文件合并成15个文件
 def groundtruth2Task1(srcpath, dstpath):
-    filelist = GetFileFromThisRootDir(srcpath)
+
+    filelist = GetFileFromThisRootDir(srcpath) # 获取所有标注文件 txt
     # names = [custombasename(x.strip())for x in filelist]
     filedict = {}
-    for cls in wordname_15:
-        fd = open(os.path.join(dstpath, 'Task1_') + cls + r'.txt', 'w')
-        filedict[cls] = fd
+    for cls_ in wordname_15: # 每个类整一个写文件的对象
+        fd = open(os.path.join(dstpath, 'Task1_') + cls_ + r'.txt', 'w')
+        filedict[cls_] = fd
     for filepath in filelist:
-        objects = parse_dota_poly2(filepath)
+        objects = parse_dota_poly2(filepath) # 读取每一个标注的内容
 
         subname = custombasename(filepath)
         pattern2 = re.compile(r'__([\d+\.]+)__\d+___')
@@ -186,21 +188,25 @@ def groundtruth2Task1(srcpath, dstpath):
             elif rate == '2':
                 outline = custombasename(filepath) + ' ' + '0.6' + ' ' + ' '.join(map(str, poly))
 
+            # 写类似的内容 
+            # P0706__0.5__0___0 1 527 514 531 505 555 519 555 530
             filedict[category].write(outline + '\n')
 
 
 
-def Task2groundtruth_poly(srcpath, dstpath):
-    thresh = 0.1
-    filedict = {}
-    Tasklist = GetFileFromThisRootDir(srcpath, '.txt')
+def Task2groundtruth_poly(srcpath, dstpath, thresh=0.1):
+
+    # thresh 过滤置信度低的结果
+    # 将每一类的文件转化为每一个ID对应结果文件
+    filedict = {} # 每一个ID (P0770) 有一个写文件的对象, 好家伙这要创建好多个io对象
+    Tasklist = GetFileFromThisRootDir(srcpath, '.txt') # 各类合并结果
 
     for Taskfile in Tasklist:
         idname = custombasename(Taskfile).split('_')[-1]
         # idname = datamap_inverse[idname]
         f = open(Taskfile, 'r')
         lines = f.readlines()
-        for line in lines:
+        for line in lines: # 迭代每一个obb框
             if len(line) == 0:
                 continue
             # print('line:', line)
@@ -211,15 +217,15 @@ def Task2groundtruth_poly(srcpath, dstpath):
             if float(confidence) > thresh:
                 if filename not in filedict:
                     # filedict[filename] = codecs.open(os.path.join(dstpath, filename + '.txt'), 'w', 'utf_16')
-                    filedict[filename] = codecs.open(os.path.join(dstpath, filename + '.txt'), 'w')
+                    filedict[filename] = codecs.open(os.path.join(dstpath, filename + '.txt'), 'w') # 该函数与 open 用法相同
                 # poly = util.dots2ToRec8(bbox)
                 poly = bbox
-                #               filedict[filename].write(' '.join(poly) + ' ' + idname + '_' + str(round(float(confidence), 2)) + '\n')
-            # print('idname:', idname)
-
-            # filedict[filename].write(' '.join(poly) + ' ' + idname + '_' + str(round(float(confidence), 2)) + '\n')
+                # filedict[filename].write(' '.join(poly) + ' ' + idname + '_' + str(round(float(confidence), 2)) + '\n')
+                # print('idname:', idname)
 
                 filedict[filename].write(' '.join(poly) + ' ' + idname + '\n')
+                # 每一行的样例：
+                # 478.0 214.0 488.0 202.0 908.0 628.0 894.0 640.0 harbor
 
 
 
