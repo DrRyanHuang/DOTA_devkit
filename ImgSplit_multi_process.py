@@ -303,8 +303,8 @@ if __name__ == '__main__':
     # start = time.clock()
     # split = splitbase(r'/data/dj/dota/val',
     #                    r'/data/dj/dota/val_1024_debugmulti-process_refactor') # time cost 19s
-    # # split.splitdata(1)
-    # # split.splitdata(2)
+    # split.splitdata(1)
+    # split.splitdata(2)
     # split.splitdata(0.4)
     #
     # elapsed = (time.clock() - start)

@@ -29,6 +29,11 @@ class DOTA:
         self.ImgToAnns = defaultdict(list) # P0010 -> 标注信息
         self.createIndex()
 
+        # 将文件ID写入文件
+        imageset_path = os.path.join(basepath, "imageset.txt")
+        with open(imageset_path, "w") as f:
+            f.write("\n".join(self.imglist))
+
     def createIndex(self):
 
         # 就是将 self.catToImgs 与 self.ImgToAnns 填充完毕

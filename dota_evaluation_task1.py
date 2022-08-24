@@ -1,3 +1,4 @@
+# 建议先跑通 demo.ipynb 文件之后, 在进行本文件的单步调试
 # --------------------------------------------------------
 # dota_evaluation_task1
 # Licensed under The MIT License [see LICENSE for details]
@@ -12,15 +13,15 @@
 """
 import xml.etree.ElementTree as ET
 import os
-#import cPickle
+# import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 import polyiou
 from functools import partial
 
 def parse_gt(filename):
+    # 将 labelTxt 目录下的标注文件读入
     """
-
     :param filename: ground truth file to parse
     :return: all instances in a picture
     """
@@ -86,12 +87,20 @@ def voc_ap(rec, prec, use_07_metric=False):
         ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
     return ap
 
+def calcoverlaps(BBGT_keep, bb):
+    overlaps = []
+    for index, GT in enumerate(BBGT_keep):
+
+        overlap = polyiou.iou_poly(polyiou.VectorDouble(BBGT_keep[index]), polyiou.VectorDouble(bb))
+        overlaps.append(overlap)
+    return overlaps
+
 
 def voc_eval(detpath,
              annopath,
              imagesetfile,
              classname,
-            # cachedir,
+             # cachedir,
              ovthresh=0.5,
              use_07_metric=False):
     """rec, prec, ap = voc_eval(detpath,
@@ -112,37 +121,41 @@ def voc_eval(detpath,
     [use_07_metric]: Whether to use VOC07's 11 point AP computation
         (default False)
     """
+
     # assumes detections are in detpath.format(classname)
     # assumes annotations are in annopath.format(imagename)
     # assumes imagesetfile is a text file with each line an image name
     # cachedir caches the annotations in a pickle file
 
     # first load gt
-    #if not os.path.isdir(cachedir):
-     #   os.mkdir(cachedir)
-    #cachefile = os.path.join(cachedir, 'annots.pkl')
+    # if not os.path.isdir(cachedir):
+    #    os.mkdir(cachedir)
+    # cachefile = os.path.join(cachedir, 'annots.pkl')
+
     # read list of images
     with open(imagesetfile, 'r') as f:
         lines = f.readlines()
     imagenames = [x.strip() for x in lines]
-    #print('imagenames: ', imagenames)
-    #if not os.path.isfile(cachefile):
-        # load annots
+    # print('imagenames: ', imagenames)
+    # if not os.path.isfile(cachefile):
+    #     load annots
+
+    # 记录每个ID对应的标注
     recs = {}
     for i, imagename in enumerate(imagenames):
         #print('parse_files name: ', annopath.format(imagename))
         recs[imagename] = parse_gt(annopath.format(imagename))
-        #if i % 100 == 0:
-         #   print ('Reading annotation for {:d}/{:d}'.format(
-          #      i + 1, len(imagenames)) )
+        # if i % 100 == 0:
+        #     print('Reading annotation for {:d}/{:d}'.format(
+        #        i + 1, len(imagenames)) )
         # save
-        #print ('Saving cached annotations to {:s}'.format(cachefile))
-        #with open(cachefile, 'w') as f:
-         #   cPickle.dump(recs, f)
-    #else:
-        # load
-        #with open(cachefile, 'r') as f:
-         #   recs = cPickle.load(f)
+        # print('Saving cached annotations to {:s}'.format(cachefile))
+        # with open(cachefile, 'w') as f:
+        #    cPickle.dump(recs, f)
+        # else:
+        #     load
+        #     with open(cachefile, 'r') as f:
+        #         recs = cPickle.load(f)
 
     # extract gt objects for this class
     class_recs = {}
@@ -166,7 +179,7 @@ def voc_eval(detpath,
     image_ids = [x[0] for x in splitlines]
     confidence = np.array([float(x[1]) for x in splitlines])
 
-    #print('check confidence: ', confidence)
+    # print('check confidence: ', confidence)
 
     BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
 
@@ -174,14 +187,15 @@ def voc_eval(detpath,
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
 
-    #print('check sorted_scores: ', sorted_scores)
-    #print('check sorted_ind: ', sorted_ind)
+    # print('check sorted_scores: ', sorted_scores)
+    # print('check sorted_ind: ', sorted_ind)
 
     ## note the usage only in numpy not for list
     BB = BB[sorted_ind, :]
     image_ids = [image_ids[x] for x in sorted_ind]
-    #print('check imge_ids: ', image_ids)
-    #print('imge_ids len:', len(image_ids))
+    # print('check imge_ids: ', image_ids)
+    # print('imge_ids len:', len(image_ids))
+
     # go down dets and mark TPs and FPs
     nd = len(image_ids)
     tp = np.zeros(nd)
@@ -227,14 +241,7 @@ def voc_eval(detpath,
             BBGT_keep_mask = overlaps > 0
             BBGT_keep = BBGT[BBGT_keep_mask, :]
             BBGT_keep_index = np.where(overlaps > 0)[0]
-            # pdb.set_trace()
-            def calcoverlaps(BBGT_keep, bb):
-                overlaps = []
-                for index, GT in enumerate(BBGT_keep):
 
-                    overlap = polyiou.iou_poly(polyiou.VectorDouble(BBGT_keep[index]), polyiou.VectorDouble(bb))
-                    overlaps.append(overlap)
-                return overlaps
             if len(BBGT_keep) > 0:
                 overlaps = calcoverlaps(BBGT_keep, bb)
 
@@ -260,7 +267,7 @@ def voc_eval(detpath,
 
 
     print('npos num:', npos)
-    fp = np.cumsum(fp)
+    fp = np.cumsum(fp) # 该函数根据 axis 参数进行累加
     tp = np.cumsum(tp)
 
     rec = tp / float(npos)
@@ -273,16 +280,13 @@ def voc_eval(detpath,
 
 def main():
 
-    # ##TODO: wrap the code in the main
-    # detpath = r'/home/dingjian/Documents/Research/experiments/light_head_faster_rotbox_best_point/Task1_results_0.1_nms_epoch18/results/Task1_{:s}.txt'
-    # annopath = r'/home/dingjian/code/DOTA/DOTA/media/OrientlabelTxt-utf-8/{:s}.txt'# change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
-    # imagesetfile = r'/home/dingjian/code/DOTA/DOTA/media/testset.txt'
-    # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
-    #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
+    detpath = r'Task1_merge/Task1_{:s}.txt'
+    annopath = r'restoredexample/labelTxt/{:s}.txt'# change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
+    imagesetfile = r'example/imageset.txt'
 
-    detpath = r'PATH_TO_BE_CONFIGURED/Task1_{:s}.txt'
-    annopath = r'PATH_TO_BE_CONFIGURED/{:s}.txt' # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
-    imagesetfile = r'PATH_TO_BE_CONFIGURED/valset.txt'
+    # detpath = r'PATH_TO_BE_CONFIGURED/Task1_{:s}.txt'
+    # annopath = r'PATH_TO_BE_CONFIGURED/{:s}.txt' # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
+    # imagesetfile = r'PATH_TO_BE_CONFIGURED/valset.txt'
 
     # For DOTA-v1.5
     # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
@@ -292,6 +296,7 @@ def main():
                 'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
     classaps = []
     map = 0
+
     for classname in classnames:
         print('classname:', classname)
         rec, prec, ap = voc_eval(detpath,

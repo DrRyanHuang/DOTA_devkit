@@ -1,3 +1,18 @@
+# 建议先跑通 demo.ipynb 文件之后, 在进行本文件的单步调试
+# 该文件用于合并最后检测的结果, 但是不能用来合并刚分割的标注文件
+# 
+# 即, 将 `Task1_ship.txt` 文件中的 items:
+# P1234__0.5__0___924 1 1024 27 1024 53 931 192 919 184
+# P1234__0.5__0___924 1 769 101 788 96 804 108 785 114
+# P1234__0.5__0___924 1 896 275 916 290 902 312 881 298
+# P1234__0.5__0___924 1 19 204 42 196 39 215 19 221
+# 合并为:
+# P0770 1.0 856.0 696.0 1468.0 1008.0 1340.0 1298.0 716.0 988.0
+# P2598 1.0 1364.0 254.0 2128.0 306.0 2028.0 1798.0 1288.0 1754.0
+# 并写入 `Task1_ship.txt` 文件中
+#
+# 即合并结果, 并做NMS
+
 """
     To use the code, users should to config detpath, annopath and imagesetfile
     detpath is the path for 15 result files, for the format, you can refer to "http://captain.whu.edu.cn/DOTAweb/tasks.html"
@@ -243,19 +258,17 @@ def mergebyrec(srcpath, dstpath):
     srcpath: result files before merge and nms
     dstpath: result files after merge and nms
     """
-    # srcpath = r'E:\bod-dataset\results\bod-v3_rfcn_2000000'
-    # dstpath = r'E:\bod-dataset\results\bod-v3_rfcn_2000000_nms'
 
     mergebase(srcpath,
               dstpath,
               py_cpu_nms)
+
+              
 def mergebypoly(srcpath, dstpath):
     """
     srcpath: result files before merge and nms
     dstpath: result files after merge and nms
     """
-    # srcpath = r'/home/dingjian/evaluation_task1/result/faster-rcnn-59/comp4_test_results'
-    # dstpath = r'/home/dingjian/evaluation_task1/result/faster-rcnn-59/testtime'
 
     # mergebase(srcpath,
     #           dstpath,
@@ -263,6 +276,10 @@ def mergebypoly(srcpath, dstpath):
     mergebase_parallel(srcpath,
               dstpath,
               py_cpu_nms_poly_fast)
+
+
 if __name__ == '__main__':
-    mergebypoly(r'path_to_configure', r'path_to_configure')
+
+    mergebypoly(r'path_to_configure', 
+                r'path_to_configure')
     # mergebyrec()

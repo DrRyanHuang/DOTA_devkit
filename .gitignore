@@ -15,4 +15,5 @@ restoredexample/*
 _my_test*
 *.pyd
 example/imagesSplit/*
+example/imageset.txt
 example_split/*
