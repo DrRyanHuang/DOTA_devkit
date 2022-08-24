@@ -281,6 +281,7 @@ class splitbase():
         self.__dict__.update(state)
 if __name__ == '__main__':
     # example usage of ImgSplit
+    
     # start = time.clock()
     # split = splitbase(r'/data/dj/dota/val',
     #                    r'/data/dj/dota/val_1024_debugmulti-process_refactor') # time cost 19s
@@ -291,11 +292,11 @@ if __name__ == '__main__':
     # elapsed = (time.clock() - start)
     # print("Time used:", elapsed)
 
-    split = splitbase(r'/home/dingjian/data/dota/val',
-                       r'/home/dingjian/data/dota/valsplit',
+    split = splitbase(r'example',
+                      r'example_split',
                       gap=200,
                       subsize=1024,
                       num_process=8
                       )
-    split.splitdata(1)
+    split.splitdata(2)
 

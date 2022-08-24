@@ -1,3 +1,7 @@
+# 本文件仅仅用来分割图片，也就是说用来分割 test 集
+# 并没有分割对应的标注
+# 但是本文件可以多进程分割照片
+
 import os
 import numpy as np
 import cv2
@@ -7,8 +11,11 @@ from multiprocessing import Pool
 from functools import partial
 
 
+# 这里我有个疑问, 这里 warp 和 不warp 有区别吗 
 def split_single_warp(name, split_base, rate, extent):
     split_base.SplitSingle(name, rate, extent)
+
+
 class splitbase():
     def __init__(self,
                  srcpath,
@@ -18,8 +25,7 @@ class splitbase():
                  ext='.png',
                  padding=True,
                  num_process=32):
-        self.srcpath = srcpath
-        self.outpath = dstpath
+
         self.gap = gap
         self.subsize = subsize
         self.slide = self.subsize - self.gap
@@ -29,10 +35,14 @@ class splitbase():
         self.padding = padding
         self.pool = Pool(num_process)
 
-        if not os.path.isdir(self.outpath):
-            os.mkdir(self.outpath)
+        if not os.path.isdir(self.dstpath):
+            os.mkdir(self.dstpath)
+
+
 
     def saveimagepatches(self, img, subimgname, left, up, ext='.png'):
+        # 根据给定的左上角，裁剪对应的patch并保存
+
         subimg = copy.deepcopy(img[up: (up + self.subsize), left: (left + self.subsize)])
         outdir = os.path.join(self.dstpath, subimgname + ext)
         h, w, c = np.shape(subimg)
@@ -43,7 +53,10 @@ class splitbase():
         else:
             cv2.imwrite(outdir, subimg)
 
+
     def SplitSingle(self, name, rate, extent):
+        # 读取，并计算出裁剪 patch 的左上角, 调用 self.saveimagepatches 去保存
+
         img = cv2.imread(os.path.join(self.srcpath, name + extent))
         assert np.shape(img) != ()
 
@@ -78,27 +91,37 @@ class splitbase():
             else:
                 left = left + self.slide
 
+
+
     def splitdata(self, rate):
 
+        # 获取图片列表
         imagelist = util.GetFileFromThisRootDir(self.srcpath)
+        # 获取图片的ID名字列表 eg: P2598
         imagenames = [util.custombasename(x) for x in imagelist if (util.custombasename(x) != 'Thumbs')]
 
         # worker = partial(self.SplitSingle, rate=rate, extent=self.ext)
         worker = partial(split_single_warp, split_base=self, rate=rate, extent=self.ext)
-        self.pool.map(worker, imagenames)
-        #
+        self.pool.map(worker, imagenames) # 进程池中每个进程从 imagenames 中拿一个元素放到 worker 里运行
+
+        # 以上多进程相当于做了这个操作
         # for name in imagenames:
         #     self.SplitSingle(name, rate, self.ext)
+
+
+    # __getstate__ 与 __setstate__ 两个魔法方法分别用于Python 对象的序列化与反序列化
     def __getstate__(self):
         self_dict = self.__dict__.copy()
-        del self_dict['pool']
+        del self_dict['pool'] # 多进程 Pool 对象无法被序列化
         return self_dict
+
 
     def __setstate__(self, state):
         self.__dict__.update(state)
 
+
 if __name__ == '__main__':
-    split = splitbase(r'/home/dingjian/data/dota/val/images',
-                      r'/home/dingjian/data/dota/valsplit',
-                      num_process=32)
-    split.splitdata(1)
+    split = splitbase(r'example/images',
+                      r'example/imagesSplit',
+                      num_process=4)
+    split.splitdata(rate=1)
